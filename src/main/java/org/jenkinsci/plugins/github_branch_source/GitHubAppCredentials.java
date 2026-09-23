@@ -641,7 +641,15 @@ public class GitHubAppCredentials extends BaseStandardCredentials implements Sta
 
     private record PermissionMapping(String detail, GHPermissionType type) implements Serializable {}
 
-    private record TokenRefreshData(String appID, String privateKey, String apiUri, String owner, String[] repositories, PermissionMapping[] permissions, String inferredOwner) implements Serializable {}
+    private record TokenRefreshData(
+            String appID,
+            String privateKey,
+            String apiUri,
+            String owner,
+            String[] repositories,
+            PermissionMapping[] permissions,
+            String inferredOwner)
+            implements Serializable {}
 
     private static final class DelegatingGitHubAppCredentials extends BaseStandardCredentials
             implements StandardUsernamePasswordCredentials {
@@ -665,7 +673,16 @@ public class GitHubAppCredentials extends BaseStandardCredentials implements Sta
             if (accessibleRepositories == null) {
                 throw new InferredAccessibleRepositoriesException(onMaster);
             }
-            tokenRefreshData = new AgentToControllerCallable.EncryptedObject<>(new TokenRefreshData(appID, onMaster.getPrivateKey().getPlainText(), onMaster.actualApiUri(), accessibleRepositories.getOwner(), accessibleRepositories.getRepositories().toArray(String[]::new), onMaster.getPermissions().entrySet().stream().map(e -> new PermissionMapping(e.getKey(), e.getValue())).toArray(PermissionMapping[]::new), onMaster.getContext().getInferredOwner()));
+            tokenRefreshData = new AgentToControllerCallable.EncryptedObject<>(new TokenRefreshData(
+                    appID,
+                    onMaster.getPrivateKey().getPlainText(),
+                    onMaster.actualApiUri(),
+                    accessibleRepositories.getOwner(),
+                    accessibleRepositories.getRepositories().toArray(String[]::new),
+                    onMaster.getPermissions().entrySet().stream()
+                            .map(e -> new PermissionMapping(e.getKey(), e.getValue()))
+                            .toArray(PermissionMapping[]::new),
+                    onMaster.getContext().getInferredOwner()));
 
             // Check token is valid before sending it to the agent.
             // Ensuring the cached token is not stale before sending it to agents keeps agents from having
@@ -753,12 +770,12 @@ public class GitHubAppCredentials extends BaseStandardCredentials implements Sta
             }
         }
 
-        private record GetToken(AgentToControllerCallable.EncryptedObject<TokenRefreshData> data) implements AgentToControllerCallable<AppInstallationToken, RuntimeException> {
+        private record GetToken(AgentToControllerCallable.EncryptedObject<TokenRefreshData> data)
+                implements AgentToControllerCallable<AppInstallationToken, RuntimeException> {
             @Override
             public AppInstallationToken call() throws RuntimeException {
                 JenkinsJVM.checkJenkinsJVM();
-                LOGGER.log(
-                        Level.FINE, "Generating App Installation Token for app ID {0} for agent", data.o().appID);
+                LOGGER.log(Level.FINE, "Generating App Installation Token for app ID {0} for agent", data.o().appID);
                 AppInstallationToken token = generateAppInstallationToken(
                         null,
                         data.o().appID,
@@ -766,7 +783,8 @@ public class GitHubAppCredentials extends BaseStandardCredentials implements Sta
                         data.o().apiUri,
                         data.o().owner,
                         Arrays.asList(data.o().repositories),
-                        Stream.of(data.o().permissions).collect(Collectors.toMap(PermissionMapping::detail, PermissionMapping::type)),
+                        Stream.of(data.o().permissions)
+                                .collect(Collectors.toMap(PermissionMapping::detail, PermissionMapping::type)),
                         data.o().inferredOwner);
                 LOGGER.log(
                         Level.FINER,
