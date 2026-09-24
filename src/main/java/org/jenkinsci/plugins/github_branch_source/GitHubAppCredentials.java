@@ -641,6 +641,7 @@ public class GitHubAppCredentials extends BaseStandardCredentials implements Sta
 
     private record PermissionMapping(String detail, GHPermissionType type) implements Serializable {}
 
+    @SuppressWarnings("lgtm[jenkins/plaintext-storage]")
     private record TokenRefreshData(
             String appID,
             String privateKey,
